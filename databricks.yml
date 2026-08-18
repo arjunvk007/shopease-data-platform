@@ -1,0 +1,48 @@
+# Root bundle configuration for the ShopEase data platform.
+# See https://docs.databricks.com/dev-tools/bundles/index.html
+
+bundle:
+  name: shopease-data-platform
+
+include:
+  - resources/*.yml
+
+variables:
+  catalog:
+    description: Unity Catalog used by the pipeline
+    default: shopease
+  schema_bronze:
+    description: Schema for raw/bronze tables
+    default: bronze
+  schema_silver:
+    description: Schema for cleaned/silver tables
+    default: silver
+  schema_gold:
+    description: Schema for business-level/gold tables
+    default: gold
+
+targets:
+  dev:
+    mode: development
+    default: true
+    workspace:
+      host: https://your-workspace-instance.cloud.databricks.com
+    variables:
+      catalog: shopease_dev
+
+  staging:
+    mode: production
+    workspace:
+      host: https://your-workspace-instance.cloud.databricks.com
+    variables:
+      catalog: shopease_staging
+
+  prod:
+    mode: production
+    workspace:
+      host: https://your-workspace-instance.cloud.databricks.com
+    variables:
+      catalog: shopease_prod
+    permissions:
+      - group_name: data-engineering
+        level: CAN_MANAGE
