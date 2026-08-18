@@ -14,13 +14,15 @@ A Databricks Asset Bundle project that implements the ShopEase e-commerce data p
     |-- databricks.yml              # Root bundle configuration
     |-- resources/
     |   |-- shopease_job.job.yml    # Job definition: bronze, silver, gold
-    |-- src/
-    |   |-- bronze/                 # Raw ingestion scripts
-    |   |-- silver/                 # Cleansing and conformance transforms
-    |   |-- gold/                   # Business aggregates and marts
-    |   |-- pipeline/               # Local orchestration helper
-    |-- tests/                      # Unit tests for transformation logic
-    |-- .github/workflows/          # CI and deploy pipelines
+        |-- src/
+    |   |-- pipeline/                  # Orchestration entry points (01_..08_..py)
+    |   |-- bronze/                    # Reusable ingestion framework
+    |   |-- silver/                    # Reusable transforms + referential integrity
+    |   |-- gold/
+    |   |   |-- dimensions/            # Dimension builders
+    |   |   |-- facts/                 # Fact table builders
+    |-- tests/                         # Unit tests for transformation logic
+    |-- .github/workflows/             # CI and deploy pipelines
 
 ## Getting started
 
