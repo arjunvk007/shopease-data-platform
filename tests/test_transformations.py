@@ -8,8 +8,9 @@ they can run in CI without a Databricks workspace.
 import pytest
 from pyspark.sql import SparkSession
 
-from src.silver.transform_silver import clean_orders
-from src.gold.build_gold import build_daily_sales
+from src.silver.referential_integrity import find_orphan_records
+from src.gold.dimensions.customer_dimension import build_customer_dimension
+from src.gold.facts.sales_fact import build_sales_fact
 
 
 @pytest.fixture(scope="module")
@@ -23,45 +24,76 @@ def spark():
     session.stop()
 
 
-@pytest.fixture
-def bronze_orders(spark):
-    data = [
-        ("o1", "c1", 100.0, "2026-01-01T10:00:00"),
-        ("o1", "c1", 100.0, "2026-01-01T10:00:00"),
-        ("o2", "c2", -5.0, "2026-01-02T09:00:00"),
-        ("o3", "c3", 25.0, "2026-01-02T11:00:00"),
-        (None, "c4", 40.0, "2026-01-03T08:00:00"),
-    ]
-    columns = ["order_id", "customer_id", "order_total", "order_timestamp"]
-    return spark.createDataFrame(data, columns)
-
-
-def test_clean_orders_dedupes_and_filters(spark, bronze_orders, monkeypatch):
-    monkeypatch.setattr(spark, "table", lambda name: bronze_orders, raising=False)
-
-    result = clean_orders(spark, "shopease", "bronze")
-    order_ids = {row["order_id"] for row in result.collect()}
-
-    assert "o1" in order_ids
-    assert "o2" not in order_ids
-    assert None not in order_ids
-    assert result.filter(result.order_id == "o1").count() == 1
-
-
-def test_build_daily_sales_aggregates(spark, monkeypatch):
-    silver_orders = spark.createDataFrame(
+def test_find_orphan_records(spark):
+    orders = spark.createDataFrame(
         [
-            ("o1", "c1", 100.0, "2026-01-01"),
-            ("o2", "c2", 50.0, "2026-01-01"),
-            ("o3", "c1", 75.0, "2026-01-02"),
+            ("o1", "c1"),
+            ("o2", "c2"),
+            ("o3", "c99"),
         ],
-        ["order_id", "customer_id", "order_total", "order_date"],
+        ["order_id", "customer_id"],
     )
-    monkeypatch.setattr(spark, "table", lambda name: silver_orders, raising=False)
+    customers = spark.createDataFrame(
+        [
+            ("c1", "Alice"),
+            ("c2", "Bob"),
+        ],
+        ["customer_id", "customer_name"],
+    )
 
-    result = build_daily_sales(spark, "shopease", "silver")
-    rows = {row["order_date"]: row for row in result.collect()}
+    orphans = find_orphan_records(orders, customers, "customer_id", "customer_id")
+    orphan_ids = {row["order_id"] for row in orphans.collect()}
 
-    assert rows["2026-01-01"]["order_count"] == 2
-    assert rows["2026-01-01"]["gross_revenue"] == 150.0
-    assert rows["2026-01-02"]["distinct_customers"] == 1
+    assert orphan_ids == {"o3"}
+
+
+def test_build_customer_dimension(spark, monkeypatch):
+    customers = spark.createDataFrame(
+        [
+            ("c1", "Alice", "US", "Consumer"),
+            ("c2", "Bob", "CA", "Corporate"),
+        ],
+        ["customer_id", "customer_name", "country", "customer_segment"],
+    )
+    monkeypatch.setattr(spark, "table", lambda name: customers, raising=False)
+
+    result = build_customer_dimension(spark)
+    rows = {row["customer_id"]: row for row in result.collect()}
+
+    assert set(result.columns) == {"customer_id", "customer_name", "country", "customer_segment"}
+    assert rows["c1"]["country"] == "US"
+    assert rows["c2"]["customer_segment"] == "Corporate"
+
+
+def test_build_sales_fact(spark, monkeypatch):
+    orders = spark.createDataFrame(
+        [
+            ("o1", "c1", "2026-01-01"),
+            ("o2", "c2", "2026-01-02"),
+        ],
+        ["order_id", "customer_id", "order_date"],
+    )
+    order_lines = spark.createDataFrame(
+        [
+            ("o1", "p1", 2, 10.0),
+            ("o1", "p2", 1, 20.0),
+            ("o2", "p1", 3, 10.0),
+        ],
+        ["order_id", "product_id", "quantity", "unit_price"],
+    )
+
+    tables = {"silver.orders": orders, "silver.order_lines": order_lines}
+    monkeypatch.setattr(spark, "table", lambda name: tables[name], raising=False)
+
+    result = build_sales_fact(spark)
+    rows = result.collect()
+
+    assert len(rows) == 3
+    assert set(result.columns) == {
+        "order_id",
+        "customer_id",
+        "product_id",
+        "order_date",
+        "quantity",
+        "unit_price",
+    }
