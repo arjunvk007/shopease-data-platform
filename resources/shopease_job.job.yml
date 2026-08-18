@@ -1,0 +1,53 @@
+resources:
+  jobs:
+    shopease_job:
+      name: shopease_medallion_pipeline
+
+      schedule:
+        quartz_cron_expression: "0 0 4 * * ?"
+        timezone_id: America/New_York
+        pause_status: UNPAUSED
+
+      email_notifications:
+        on_failure:
+          - your-team@example.com
+
+      tasks:
+        - task_key: bronze_ingest
+          notebook_task:
+            notebook_path: ../src/bronze/ingest_bronze.py
+            base_parameters:
+              catalog: ${var.catalog}
+              schema: ${var.schema_bronze}
+          new_cluster:
+            spark_version: 15.4.x-scala2.12
+            node_type_id: i3.xlarge
+            num_workers: 2
+
+        - task_key: silver_transform
+          depends_on:
+            - task_key: bronze_ingest
+          notebook_task:
+            notebook_path: ../src/silver/transform_silver.py
+            base_parameters:
+              catalog: ${var.catalog}
+              bronze_schema: ${var.schema_bronze}
+              silver_schema: ${var.schema_silver}
+          new_cluster:
+            spark_version: 15.4.x-scala2.12
+            node_type_id: i3.xlarge
+            num_workers: 2
+
+        - task_key: gold_build
+          depends_on:
+            - task_key: silver_transform
+          notebook_task:
+            notebook_path: ../src/gold/build_gold.py
+            base_parameters:
+              catalog: ${var.catalog}
+              silver_schema: ${var.schema_silver}
+              gold_schema: ${var.schema_gold}
+          new_cluster:
+            spark_version: 15.4.x-scala2.12
+            node_type_id: i3.xlarge
+            num_workers: 2
