@@ -11,7 +11,7 @@ from pyspark.sql import functions as F
 def main():
     spark = SparkSession.builder.getOrCreate()
 
-    sales_fact = spark.table("shopease.gold.fact_sales")
+    sales_fact = spark.table("olist.gold.fact_sales")
 
     kpis = sales_fact.agg(
         F.countDistinct("order_id").alias("total_orders"),
@@ -19,8 +19,8 @@ def main():
         F.sum(F.col("quantity") * F.col("unit_price")).alias("total_revenue"),
     )
 
-    kpis.write.format("delta").mode("overwrite").saveAsTable("shopease.gold.kpi_summary")
-    print("[kpi_refresh] published shopease.gold.kpi_summary")
+    kpis.write.format("delta").mode("overwrite").saveAsTable("olist.gold.kpi_summary")
+    print("[kpi_refresh] published olist.gold.kpi_summary")
 
 if __name__ == "__main__":
     main()
