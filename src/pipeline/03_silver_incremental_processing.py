@@ -18,7 +18,7 @@ from src.silver.silver_transformation_framework import merge_incremental, dedupe
 def main():
     spark = SparkSession.builder.getOrCreate()
 
-    orders = spark.table("shopease.bronze.orders")
+    orders = spark.table("olist.bronze.orders")
     orders = enforce_not_null(orders, ["order_id", "customer_id"])
     orders = dedupe_latest(orders, ["order_id"], "_ingested_at")
     orders = orders.withColumn("order_date", F.to_date("order_timestamp"))
@@ -26,10 +26,10 @@ def main():
     merge_incremental(
         spark,
         source_df=orders,
-        target_table="shopease.silver.orders",
+        target_table="olist.silver.orders",
         merge_condition="target.order_id = source.order_id",
     )
-    print("[silver_incremental_processing] merged orders into shopease.silver.orders")
+    print("[silver_incremental_processing] merged orders into olist.silver.orders")
 
 if __name__ == "__main__":
     main()
