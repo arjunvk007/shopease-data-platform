@@ -19,10 +19,10 @@ def main():
     spark = SparkSession.builder.getOrCreate()
 
     sales_fact = build_sales_fact(spark)
-    sales_fact.write.format("delta").mode("overwrite").saveAsTable("shopease.gold.fact_sales")
+    sales_fact.write.format("delta").mode("overwrite").saveAsTable("olist.gold.fact_sales")
 
     order_fact = build_order_fact(spark)
-    order_fact.write.format("delta").mode("overwrite").saveAsTable("shopease.gold.fact_orders")
+    order_fact.write.format("delta").mode("overwrite").saveAsTable("olist.gold.fact_orders")
 
     print("[gold_facts] published fact_sales, fact_orders")
 
