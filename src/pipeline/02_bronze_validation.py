@@ -7,9 +7,10 @@ and fails fast if a source came back empty.
 
 from pyspark.sql import SparkSession
 
+import inspect
 import os
 import sys
-sys.path.append(os.path.abspath("../.."))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(inspect.currentframe().f_code.co_filename), "..", "..")))
 
 from src.bronze.bronze_ingestion_framework import row_counts
 
