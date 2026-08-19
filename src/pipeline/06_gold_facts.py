@@ -7,6 +7,10 @@ lives under src/gold/facts/.
 
 from pyspark.sql import SparkSession
 
+import os
+import sys
+sys.path.append(os.path.abspath("../.."))
+
 from src.gold.facts.sales_fact import build_sales_fact
 from src.gold.facts.order_fact import build_order_fact
 
