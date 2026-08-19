@@ -26,21 +26,21 @@ targets:
     mode: development
     default: true
     workspace:
-      host: https://your-workspace-instance.cloud.databricks.com
+      host: https://dbc-d675561d-8ffd.cloud.databricks.com/browse/folders/3971975259225783?o=7474651998106048
     variables:
       catalog: shopease_dev
 
   staging:
     mode: production
     workspace:
-      host: https://your-workspace-instance.cloud.databricks.com
+      host: https://dbc-d675561d-8ffd.cloud.databricks.com/browse/folders/3971975259225783?o=7474651998106048
     variables:
       catalog: shopease_staging
 
   prod:
     mode: production
     workspace:
-      host: https://your-workspace-instance.cloud.databricks.com
+      host: https://dbc-d675561d-8ffd.cloud.databricks.com/browse/folders/3971975259225783?o=7474651998106048
     variables:
       catalog: shopease_prod
     permissions:
