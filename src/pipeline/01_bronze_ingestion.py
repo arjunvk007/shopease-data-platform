@@ -15,12 +15,12 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(inspect.currentfram
 
 from src.bronze.bronze_ingestion_framework import ingest_source_table
 
-SOURCE_ROOT = "/Volumes/shopease/landing/raw"
+SOURCE_ROOT = "/Volumes/olist/landing/raw"
 SOURCE_TABLES = {
-    "orders": "shopease.bronze.orders",
-    "customers": "shopease.bronze.customers",
-    "products": "shopease.bronze.products",
-    "clickstream": "shopease.bronze.clickstream",
+    "orders": "olist.bronze.orders",
+    "customers": "olist.bronze.customers",
+    "products": "olist.bronze.products",
+    "clickstream": "olist.bronze.clickstream",
 }
 
 def main():
