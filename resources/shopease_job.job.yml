@@ -16,60 +16,36 @@ resources:
         - task_key: bronze_ingestion
           spark_python_task:
             python_file: ../src/pipeline/01_bronze_ingestion.py
-          new_cluster:
-            spark_version: 15.4.x-scala2.12
-            node_type_id: i3.xlarge
-            num_workers: 2
 
         - task_key: bronze_validation
           depends_on:
             - task_key: bronze_ingestion
           spark_python_task:
             python_file: ../src/pipeline/02_bronze_validation.py
-          new_cluster:
-            spark_version: 15.4.x-scala2.12
-            node_type_id: i3.xlarge
-            num_workers: 2
 
         - task_key: silver_incremental_processing
           depends_on:
             - task_key: bronze_validation
           spark_python_task:
             python_file: ../src/pipeline/03_silver_incremental_processing.py
-          new_cluster:
-            spark_version: 15.4.x-scala2.12
-            node_type_id: i3.xlarge
-            num_workers: 2
 
         - task_key: silver_validation
           depends_on:
             - task_key: silver_incremental_processing
           spark_python_task:
             python_file: ../src/pipeline/04_silver_validation.py
-          new_cluster:
-            spark_version: 15.4.x-scala2.12
-            node_type_id: i3.xlarge
-            num_workers: 2
 
         - task_key: gold_dimensions
           depends_on:
             - task_key: silver_validation
           spark_python_task:
             python_file: ../src/pipeline/05_gold_dimensions.py
-          new_cluster:
-            spark_version: 15.4.x-scala2.12
-            node_type_id: i3.xlarge
-            num_workers: 2
 
         - task_key: gold_facts
           depends_on:
             - task_key: silver_validation
           spark_python_task:
             python_file: ../src/pipeline/06_gold_facts.py
-          new_cluster:
-            spark_version: 15.4.x-scala2.12
-            node_type_id: i3.xlarge
-            num_workers: 2
 
         - task_key: gold_validation
           depends_on:
@@ -77,17 +53,9 @@ resources:
             - task_key: gold_facts
           spark_python_task:
             python_file: ../src/pipeline/07_gold_validation.py
-          new_cluster:
-            spark_version: 15.4.x-scala2.12
-            node_type_id: i3.xlarge
-            num_workers: 2
 
         - task_key: kpi_refresh
           depends_on:
             - task_key: gold_validation
           spark_python_task:
             python_file: ../src/pipeline/08_kpi_refresh.py
-          new_cluster:
-            spark_version: 15.4.x-scala2.12
-            node_type_id: i3.xlarge
-            num_workers: 2
