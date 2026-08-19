@@ -7,11 +7,11 @@ Sanity-checks the published gold tables before the KPI refresh step runs.
 from pyspark.sql import SparkSession
 
 GOLD_TABLES = [
-    "shopease.gold.dim_customer",
-    "shopease.gold.dim_product",
-    "shopease.gold.dim_date",
-    "shopease.gold.fact_sales",
-    "shopease.gold.fact_orders",
+    "olist.gold.dim_customer",
+    "olist.gold.dim_product",
+    "olist.gold.dim_date",
+    "olist.gold.fact_sales",
+    "olist.gold.fact_orders",
 ]
 
 def main():
