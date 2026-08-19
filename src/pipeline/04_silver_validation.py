@@ -17,8 +17,8 @@ from src.silver.referential_integrity import assert_no_orphans
 def main():
     spark = SparkSession.builder.getOrCreate()
 
-    orders = spark.table("shopease.silver.orders")
-    customers = spark.table("shopease.silver.customers")
+    orders = spark.table("olist.silver.orders")
+    customers = spark.table("olist.silver.customers")
 
     assert_no_orphans(
         child_df=orders,
