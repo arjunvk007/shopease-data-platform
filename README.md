@@ -55,3 +55,6 @@ Internal project, no license specified yet.
 
 ## CI/CD
 Pull requests are validated using GitHub Actions before deployment.
+
+## CI/CD
+Pull requests are validated using GitHub Actions before deployment.
