@@ -8,9 +8,9 @@ they can run in CI without a Databricks workspace.
 import pytest
 from pyspark.sql import SparkSession
 
-from src.silver.referential_integrity import find_orphan_records
 from src.gold.dimensions.customer_dimension import build_customer_dimension
 from src.gold.facts.sales_fact import build_sales_fact
+from src.silver.referential_integrity import find_orphan_records
 
 
 @pytest.fixture(scope="module")

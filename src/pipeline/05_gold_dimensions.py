@@ -5,16 +5,18 @@ Builds and publishes each gold dimension table. Business logic for each
 dimension lives under src/gold/dimensions/.
 """
 
-from pyspark.sql import SparkSession
-
 import inspect
 import os
 import sys
+
+from pyspark.sql import SparkSession
+
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(inspect.currentframe().f_code.co_filename), "..", "..")))
 
 from src.gold.dimensions.customer_dimension import build_customer_dimension
-from src.gold.dimensions.product_dimension import build_product_dimension
 from src.gold.dimensions.date_dimension import build_date_dimension
+from src.gold.dimensions.product_dimension import build_product_dimension
+
 
 def main():
     spark = SparkSession.builder.getOrCreate()

@@ -8,6 +8,7 @@ a small summary table for dashboards.
 from pyspark.sql import SparkSession
 from pyspark.sql import functions as F
 
+
 def main():
     spark = SparkSession.builder.getOrCreate()
 
