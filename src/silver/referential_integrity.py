@@ -7,6 +7,7 @@ child records before they reach the gold layer.
 
 from pyspark.sql import DataFrame
 
+
 def find_orphan_records(child_df: DataFrame, parent_df: DataFrame, child_key: str, parent_key: str) -> DataFrame:
     """Return rows in child_df whose key has no match in parent_df."""
     return child_df.alias("child").join(

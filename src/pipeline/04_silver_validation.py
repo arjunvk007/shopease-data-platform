@@ -5,14 +5,16 @@ Runs referential integrity checks between silver tables before gold build
 scripts are allowed to run.
 """
 
-from pyspark.sql import SparkSession
-
 import inspect
 import os
 import sys
+
+from pyspark.sql import SparkSession
+
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(inspect.currentframe().f_code.co_filename), "..", "..")))
 
 from src.silver.referential_integrity import assert_no_orphans
+
 
 def main():
     spark = SparkSession.builder.getOrCreate()

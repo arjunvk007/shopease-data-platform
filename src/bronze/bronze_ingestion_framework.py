@@ -8,6 +8,7 @@ implementing Auto Loader / batch ingestion logic inline.
 from pyspark.sql import DataFrame
 from pyspark.sql import functions as F
 
+
 def add_ingestion_metadata(df: DataFrame) -> DataFrame:
     """Attach standard bronze ingestion metadata columns."""
     return (
