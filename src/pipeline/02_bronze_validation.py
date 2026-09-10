@@ -15,10 +15,15 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(inspect.currentfram
 from src.bronze.bronze_ingestion_framework import row_counts
 
 BRONZE_TABLES = [
-    "olist.bronze.orders",
     "olist.bronze.customers",
+    "olist.bronze.orders",
+    "olist.bronze.order_items",
+    "olist.bronze.order_payments",
+    "olist.bronze.order_reviews",
     "olist.bronze.products",
-    "olist.bronze.clickstream",
+    "olist.bronze.sellers",
+    "olist.bronze.geolocation",
+    "olist.bronze.category_translation",
 ]
 
 def main():

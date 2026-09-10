@@ -10,7 +10,7 @@ include:
 variables:
   catalog:
     description: Unity Catalog used by the pipeline
-    default: shopease
+    default: olist
   schema_bronze:
     description: Schema for raw/bronze tables
     default: bronze
@@ -28,7 +28,7 @@ targets:
     workspace:
       host: https://dbc-d675561d-8ffd.cloud.databricks.com
     variables:
-      catalog: shopease_dev
+      catalog: olist
 
   staging:
     mode: production
