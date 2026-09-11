@@ -27,11 +27,11 @@ jobs:
         run: ruff check src tests
 
       - name: Run unit tests
-          env:
-    PYTHONPATH: ${{ github.workspace }}
-    PYSPARK_PYTHON: python3
-    PYSPARK_DRIVER_PYTHON: python3
-  run: python -m pytest tests -v
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+          PYSPARK_PYTHON: python3
+          PYSPARK_DRIVER_PYTHON: python3
+        run: python -m pytest tests -v
 
   validate-bundle:
     runs-on: ubuntu-latest
