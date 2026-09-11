@@ -7,6 +7,7 @@ line-level detail in sales_fact.py.
 
 from pyspark.sql import functions as F
 
+
 def build_order_fact(spark):
     orders = spark.table("silver.orders")
     order_lines = spark.table("silver.order_lines")

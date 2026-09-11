@@ -10,6 +10,7 @@ from pyspark.sql import DataFrame
 from pyspark.sql import functions as F
 from pyspark.sql.window import Window
 
+
 def merge_incremental(spark, source_df: DataFrame, target_table: str, merge_condition: str):
     """Upsert source_df into target_table using the given merge condition."""
     target = DeltaTable.forName(spark, target_table)
