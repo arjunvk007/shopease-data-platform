@@ -7,6 +7,7 @@ silver table, so it can be rebuilt independently of any upstream data.
 
 from pyspark.sql import functions as F
 
+
 def build_date_dimension(spark, start_date: str, end_date: str):
     dates = spark.sql(
         f"SELECT explode(sequence(to_date('{start_date}'), to_date('{end_date}'), interval 1 day)) AS calendar_date"

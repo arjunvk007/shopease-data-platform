@@ -8,11 +8,11 @@ Each dataset uses an independent checkpoint so file-processing state
 is isolated per source.
 """
 
-from pyspark.sql import SparkSession
-
 import inspect
 import os
 import sys
+
+from pyspark.sql import SparkSession
 
 # Allow imports from project root
 sys.path.append(
@@ -28,7 +28,6 @@ sys.path.append(
 from src.bronze.bronze_ingestion_framework import (
     ingest_source_table_streaming,
 )
-
 
 # -------------------------------------------------------------------
 # Configuration

@@ -5,15 +5,21 @@ Reads the latest bronze rows and merges them into the silver tables using
 the reusable incremental-merge helper.
 """
 
-from pyspark.sql import SparkSession
-from pyspark.sql import functions as F
-
 import inspect
 import os
 import sys
+
+from pyspark.sql import SparkSession
+from pyspark.sql import functions as F
+
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(inspect.currentframe().f_code.co_filename), "..", "..")))
 
-from src.silver.silver_transformation_framework import merge_incremental, dedupe_latest, enforce_not_null
+from src.silver.silver_transformation_framework import (
+    dedupe_latest,
+    enforce_not_null,
+    merge_incremental,
+)
+
 
 def main():
     spark = SparkSession.builder.getOrCreate()

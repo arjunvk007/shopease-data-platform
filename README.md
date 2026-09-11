@@ -52,3 +52,7 @@ A Databricks Asset Bundle project that implements the ShopEase e-commerce data p
 ## License
 
 Internal project, no license specified yet.
+
+CI retrigger
+
+CI retrigger
