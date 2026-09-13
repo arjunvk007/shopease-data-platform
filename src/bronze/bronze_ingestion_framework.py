@@ -13,7 +13,7 @@ def add_ingestion_metadata(df: DataFrame) -> DataFrame:
     """Attach standard bronze ingestion metadata columns."""
     return (
         df.withColumn("_ingested_at", F.current_timestamp())
-        .withColumn("_source_file", F.input_file_name())
+        .withColumn("_source_file", F.col("_metadata.file_path"))
     )
 
 
