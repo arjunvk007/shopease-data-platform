@@ -10,18 +10,18 @@ from pyspark.sql import functions as F
 
 
 def main():
-    spark = SparkSession.builder.getOrCreate()
+        spark = SparkSession.builder.getOrCreate()
 
     sales_fact = spark.table("olist.gold.fact_sales")
 
     kpis = sales_fact.agg(
-        F.countDistinct("order_id").alias("total_orders"),
-        F.countDistinct("customer_id").alias("total_customers"),
-        F.sum(F.col("quantity") * F.col("unit_price")).alias("total_revenue"),
+                F.countDistinct("order_id").alias("total_orders"),
+                F.countDistinct("customer_id").alias("total_customers"),
+                F.sum(F.col("price") + F.col("freight_value")).alias("total_revenue"),
     )
 
     kpis.write.format("delta").mode("overwrite").saveAsTable("olist.gold.kpi_summary")
     print("[kpi_refresh] published olist.gold.kpi_summary")
 
 if __name__ == "__main__":
-    main()
+        main()
