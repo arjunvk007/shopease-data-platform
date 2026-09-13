@@ -23,11 +23,17 @@ def merge_incremental(spark, source_df: DataFrame, target_table: str, merge_cond
         return
 
     target = DeltaTable.forName(spark, target_table)
+    # Update/insert only the columns present in source_df. Using the blanket
+    # *All variants instead would require target_table's schema to match
+    # source_df exactly, which breaks the moment the target has picked up an
+    # extra column (e.g. Auto Loader's _rescued_data) that the source select
+    # doesn't include.
+    column_map = {column: f"source.{column}" for column in source_df.columns}
     (
         target.alias("target")
         .merge(source_df.alias("source"), merge_condition)
-        .whenMatchedUpdateAll()
-        .whenNotMatchedInsertAll()
+        .whenMatchedUpdate(set=column_map)
+        .whenNotMatchedInsert(values=column_map)
         .execute()
     )
 
