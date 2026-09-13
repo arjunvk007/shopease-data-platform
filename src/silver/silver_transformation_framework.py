@@ -22,6 +22,30 @@ def merge_incremental(spark, source_df: DataFrame, target_table: str, merge_cond
         source_df.write.format("delta").saveAsTable(target_table)
         return
 
+    # If a shared column's type has changed since target_table was created
+    # or last had that column (e.g. a silver-layer fix now casts price to
+    # double, but the table was first created back when that column came
+    # through as string), a plain MERGE won't widen the existing column --
+    # Delta either rejects the write or silently casts the new value back
+    # down to the old type, so the fix would never actually take effect in
+    # the table. Self-heal by doing a one-time full overwrite instead of a
+    # merge whenever that's detected. This is safe for this pipeline
+    # specifically because every run re-derives source_df from the full
+    # bronze table (nothing here is a true incremental delta), so an
+    # overwrite converges to the same rows an incremental merge would --
+    # just with the corrected schema.
+    target_dtypes = dict(spark.table(target_table).dtypes)
+    source_dtypes = dict(source_df.dtypes)
+    schema_drifted = any(
+        target_dtypes.get(column) not in (None, source_dtypes[column])
+        for column in source_dtypes
+    )
+    if schema_drifted:
+        source_df.write.format("delta").mode("overwrite").option(
+            "overwriteSchema", "true"
+        ).saveAsTable(target_table)
+        return
+
     target = DeltaTable.forName(spark, target_table)
     # Update/insert only the columns present in source_df. Using the blanket
     # *All variants instead would require target_table's schema to match
