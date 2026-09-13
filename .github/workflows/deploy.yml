@@ -23,10 +23,19 @@ jobs:
         env:
           DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
           DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
+          DATABRICKS_AUTH_TYPE: pat
         run: databricks bundle validate -t dev
 
       - name: Deploy bundle to DEV
         env:
           DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
           DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
+          DATABRICKS_AUTH_TYPE: pat
         run: databricks bundle deploy -t dev
+
+      - name: Run DEV smoke test
+        env:
+          DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
+          DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
+          DATABRICKS_AUTH_TYPE: pat
+        run: databricks bundle run -t dev shopease_job
