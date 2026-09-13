@@ -57,7 +57,7 @@ def enforce_not_null(df: DataFrame, required_columns) -> DataFrame:
     return df.filter(condition)
 
 
-def split_by_referential_integrity(df: DataFrame, ref_df: DataFrame, key_column: str, ref_key_column: str = None):
+def split_by_referential_integrity(df: DataFrame, ref_df: DataFrame, key_column: str, ref_key_column: str | None = None):
     """Split df into (valid, orphaned) based on whether key_column has a match
     in ref_df's ref_key_column (defaults to the same name as key_column).
 
