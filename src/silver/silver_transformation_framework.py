@@ -71,3 +71,28 @@ def split_by_referential_integrity(df: DataFrame, ref_df: DataFrame, key_column:
     valid = df.join(ref_keys, on=key_column, how="left_semi")
     orphaned = df.join(ref_keys, on=key_column, how="left_anti")
     return valid, orphaned
+
+
+def remove_from_target(spark, keys_df: DataFrame, target_table: str, delete_condition: str):
+    """Delete any rows in target_table that match keys_df, if the table exists.
+
+    merge_incremental only upserts (whenMatchedUpdate/whenNotMatchedInsert) and
+    never removes a row that's absent from the current source batch. That's
+    fine for ordinary incremental runs, but it means rows written by an older,
+    pre-quarantine version of a pipeline (e.g. orphaned orders merged into
+    olist.silver.orders before split_by_referential_integrity existed) stay
+    stuck in the target forever, even once the source excludes them going
+    forward. Call this alongside the quarantine-insert step so the same set of
+    keys that gets routed to quarantine is also purged from the target it may
+    have already been written to.
+    """
+    if not spark.catalog.tableExists(target_table):
+        return
+
+    target = DeltaTable.forName(spark, target_table)
+    (
+        target.alias("target")
+        .merge(keys_df.alias("source"), delete_condition)
+        .whenMatchedDelete()
+        .execute()
+    )
