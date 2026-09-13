@@ -9,12 +9,12 @@ from pyspark.sql import functions as F
 
 
 def build_order_fact(spark):
-    orders = spark.table("silver.orders")
-    order_lines = spark.table("silver.order_lines")
+    orders = spark.table("olist.silver.orders")
+    order_items = spark.table("olist.silver.order_items")
 
-    line_agg = order_lines.groupBy("order_id").agg(
+    line_agg = order_items.groupBy("order_id").agg(
         F.count("product_id").alias("line_count"),
-        F.sum(F.col("quantity") * F.col("unit_price")).alias("order_total"),
+        F.sum(F.col("price") + F.col("freight_value")).alias("order_total"),
     )
 
     return orders.join(line_agg, "order_id", "left").select(

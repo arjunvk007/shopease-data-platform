@@ -21,6 +21,8 @@ def main():
 
     orders = spark.table("olist.silver.orders")
     customers = spark.table("olist.silver.customers")
+    order_items = spark.table("olist.silver.order_items")
+    products = spark.table("olist.silver.products")
 
     assert_no_orphans(
         child_df=orders,
@@ -29,7 +31,24 @@ def main():
         parent_key="customer_id",
         label="orders -> customers",
     )
-    print("[silver_validation] no orphaned orders found")
+
+    assert_no_orphans(
+        child_df=order_items,
+        parent_df=orders,
+        child_key="order_id",
+        parent_key="order_id",
+        label="order_items -> orders",
+    )
+
+    assert_no_orphans(
+        child_df=order_items,
+        parent_df=products,
+        child_key="product_id",
+        parent_key="product_id",
+        label="order_items -> products",
+    )
+
+    print("[silver_validation] no orphaned records found")
 
 if __name__ == "__main__":
     main()
