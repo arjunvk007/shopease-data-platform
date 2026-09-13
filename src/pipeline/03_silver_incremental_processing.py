@@ -141,6 +141,14 @@ def main():
     order_items = spark.table("olist.bronze.order_items")
     order_items = enforce_not_null(order_items, ["order_id", "order_item_id", "product_id"])
     order_items = dedupe_latest(order_items, ["order_id", "order_item_id"], "_ingested_at")
+    # price/freight_value land in bronze as strings (the Auto Loader schema
+    # for this dataset was inferred as string for these columns), but the
+    # gold layer needs to do arithmetic on them (order totals, KPI
+    # revenue). try_cast rather than cast so a handful of malformed values
+    # become null instead of failing the whole run.
+    order_items = order_items.withColumn(
+        "price", F.expr("try_cast(price AS double)")
+    ).withColumn("freight_value", F.expr("try_cast(freight_value AS double)"))
     order_items = order_items.select(
         "order_id",
         "order_item_id",
