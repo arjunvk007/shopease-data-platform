@@ -20,6 +20,7 @@ from src.silver.silver_transformation_framework import (
     dedupe_latest,
     enforce_not_null,
     merge_incremental,
+    split_by_referential_integrity,
 )
 
 
@@ -94,9 +95,31 @@ def main():
         "order_delivered_customer_date",
         "order_estimated_delivery_date",
     )
+
+    # A handful of orders reference a customer_id that isn't in
+    # olist.silver.customers (a gap in the landing data, not something this
+    # pipeline can fix). Rather than let that hard-fail silver_validation and
+    # block every downstream task, route those orders to a quarantine table
+    # and keep the rest of the pipeline moving on the clean data.
+    valid_orders, orphaned_orders = split_by_referential_integrity(
+        orders, customers, "customer_id"
+    )
+    orphaned_orders_count = orphaned_orders.count()
+    if orphaned_orders_count > 0:
+        print(
+            f"[silver_incremental_processing] quarantining {orphaned_orders_count} "
+            "orders with no matching customer"
+        )
+        merge_incremental(
+            spark,
+            source_df=orphaned_orders.withColumn("_quarantine_reason", F.lit("missing customer")),
+            target_table="olist.quarantine.orders",
+            merge_condition="target.order_id = source.order_id",
+        )
+
     merge_incremental(
         spark,
-        source_df=orders,
+        source_df=valid_orders,
         target_table="olist.silver.orders",
         merge_condition="target.order_id = source.order_id",
     )
@@ -114,9 +137,40 @@ def main():
         "price",
         "freight_value",
     )
+
+    # Cascade the same quarantine treatment: an order_item can only be valid
+    # if it points at an order that made it into olist.silver.orders (i.e.
+    # wasn't itself quarantined above) AND at a real product.
+    valid_by_order, orphaned_by_order = split_by_referential_integrity(
+        order_items, valid_orders, "order_id"
+    )
+    valid_order_items, orphaned_by_product = split_by_referential_integrity(
+        valid_by_order, products, "product_id"
+    )
+    orphaned_order_items = orphaned_by_order.withColumn(
+        "_quarantine_reason", F.lit("missing order")
+    ).unionByName(
+        orphaned_by_product.withColumn("_quarantine_reason", F.lit("missing product"))
+    )
+    orphaned_order_items_count = orphaned_order_items.count()
+    if orphaned_order_items_count > 0:
+        print(
+            f"[silver_incremental_processing] quarantining {orphaned_order_items_count} "
+            "order_items with no matching order or product"
+        )
+        merge_incremental(
+            spark,
+            source_df=orphaned_order_items,
+            target_table="olist.quarantine.order_items",
+            merge_condition=(
+                "target.order_id = source.order_id "
+                "AND target.order_item_id = source.order_item_id"
+            ),
+        )
+
     merge_incremental(
         spark,
-        source_df=order_items,
+        source_df=valid_order_items,
         target_table="olist.silver.order_items",
         merge_condition=(
             "target.order_id = source.order_id "
