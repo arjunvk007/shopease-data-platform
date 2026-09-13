@@ -102,9 +102,8 @@ def remove_from_target(spark, keys_df: DataFrame, target_table: str, delete_cond
 
     merge_incremental only upserts (whenMatchedUpdate/whenNotMatchedInsert) and
     never removes a row that's absent from the current source batch. That's
-    fine for ordinary incremental runs, but it means rows written by an older,
-    pre-quarantine version of a pipeline (e.g. orphaned orders merged into
-    olist.silver.orders before split_by_referential_integrity existed) stay
+    fine for ordinary incremental runs, but it means rows written by an older,(e.g. orphaned orders merged into
+the Silver orders table before split_by_referential_integrity existed) stay
     stuck in the target forever, even once the source excludes them going
     forward. Call this alongside the quarantine-insert step so the same set of
     keys that gets routed to quarantine is also purged from the target it may

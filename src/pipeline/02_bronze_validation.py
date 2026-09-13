@@ -1,44 +1,119 @@
-"""
-Pipeline entry point: bronze validation.
-
-Confirms that each bronze table received rows in the latest ingestion run
-and fails fast if a source came back empty.
-"""
-
-import inspect
-import os
-import sys
-
 from pyspark.sql import SparkSession
 
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(inspect.currentframe().f_code.co_filename), "..", "..")))
+from src.pipeline.runtime_config import get_runtime_config
 
-from src.bronze.bronze_ingestion_framework import row_counts
+spark = SparkSession.builder.getOrCreate()
+
+CATALOG, ENVIRONMENT = get_runtime_config()
+
 
 BRONZE_TABLES = [
-    "olist.bronze.customers",
-    "olist.bronze.orders",
-    "olist.bronze.order_items",
-    "olist.bronze.order_payments",
-    "olist.bronze.order_reviews",
-    "olist.bronze.products",
-    "olist.bronze.sellers",
-    "olist.bronze.geolocation",
-    "olist.bronze.category_translation",
+    "customers",
+    "orders",
+    "order_items",
+    "order_payments",
+    "order_reviews",
+    "products",
+    "sellers",
+    "geolocation",
+    "category_translation",
 ]
 
-def main():
-    spark = SparkSession.builder.getOrCreate()
 
-    failures = []
-    for table_name in BRONZE_TABLES:
-        count = row_counts(spark, table_name)
-        print(f"[bronze_validation] {table_name}: {count} rows")
-        if count == 0:
-            failures.append(table_name)
+REQUIRED_METADATA_COLUMNS = {
+    "_ingested_at",
+    "_source_file",
+}
 
-    if failures:
-        raise ValueError(f"Bronze validation failed, empty tables: {failures}")
 
-if __name__ == "__main__":
-    main()
+print("=" * 70)
+print("ShopEase Bronze Validation")
+print(f"Environment : {ENVIRONMENT}")
+print(f"Catalog     : {CATALOG}")
+print("=" * 70)
+
+
+validation_errors = []
+
+
+for dataset in BRONZE_TABLES:
+    table_name = f"{CATALOG}.bronze.{dataset}"
+
+    print(f"\nValidating: {table_name}")
+
+    # ---------------------------------------------------------------
+    # 1. Verify table exists
+    # ---------------------------------------------------------------
+    if not spark.catalog.tableExists(table_name):
+        error = f"{table_name}: table does not exist"
+        validation_errors.append(error)
+        print(f"FAILED: {error}")
+        continue
+
+    print("PASS: table exists")
+
+    # ---------------------------------------------------------------
+    # 2. Read table
+    # ---------------------------------------------------------------
+    df = spark.table(table_name)
+
+    print("PASS: table is readable")
+
+    # ---------------------------------------------------------------
+    # 3. Verify table contains records
+    # ---------------------------------------------------------------
+    row_count = df.count()
+
+    if row_count <= 0:
+        error = f"{table_name}: table contains zero records"
+        validation_errors.append(error)
+        print(f"FAILED: {error}")
+    else:
+        print(f"PASS: row count = {row_count}")
+
+    # ---------------------------------------------------------------
+    # 4. Verify ingestion metadata columns
+    # ---------------------------------------------------------------
+    actual_columns = set(df.columns)
+
+    missing_metadata_columns = REQUIRED_METADATA_COLUMNS - actual_columns
+
+    if missing_metadata_columns:
+        error = (
+            f"{table_name}: missing ingestion metadata columns: "
+            f"{sorted(missing_metadata_columns)}"
+        )
+        validation_errors.append(error)
+        print(f"FAILED: {error}")
+    else:
+        print(
+            "PASS: ingestion metadata columns present "
+            "(_ingested_at, _source_file)"
+        )
+
+
+# -------------------------------------------------------------------
+# Final quality gate
+# -------------------------------------------------------------------
+
+print("\n" + "=" * 70)
+
+if validation_errors:
+    print("BRONZE VALIDATION FAILED")
+    print("=" * 70)
+
+    for error in validation_errors:
+        print(f"- {error}")
+
+    raise RuntimeError(
+        f"Bronze validation failed with "
+        f"{len(validation_errors)} error(s)."
+    )
+
+
+print("BRONZE VALIDATION PASSED")
+print(
+    f"Validated {len(BRONZE_TABLES)} Bronze tables "
+    f"in {CATALOG}.bronze"
+)
+print("=" * 70)

@@ -1,6 +1,3 @@
-# Root bundle configuration for the ShopEase data platform.
-# See https://docs.databricks.com/dev-tools/bundles/index.html
-
 bundle:
   name: shopease-data-platform
 
@@ -11,12 +8,15 @@ variables:
   catalog:
     description: Unity Catalog used by the pipeline
     default: olist
+
   schema_bronze:
     description: Schema for raw/bronze tables
     default: bronze
+
   schema_silver:
     description: Schema for cleaned/silver tables
     default: silver
+
   schema_gold:
     description: Schema for business-level/gold tables
     default: gold
@@ -25,24 +25,33 @@ targets:
   dev:
     mode: development
     default: true
+
     workspace:
       host: https://dbc-d675561d-8ffd.cloud.databricks.com
+
     variables:
       catalog: olist
 
   staging:
     mode: production
+
     workspace:
       host: https://dbc-d675561d-8ffd.cloud.databricks.com
+      root_path: /Workspace/Users/arjun.vky7@gmail.com/.bundle/${bundle.name}/${bundle.target}
+
     variables:
       catalog: shopease_staging
 
   prod:
     mode: production
+
     workspace:
       host: https://dbc-d675561d-8ffd.cloud.databricks.com
+      root_path: /Workspace/Users/arjun.vky7@gmail.com/.bundle/${bundle.name}/${bundle.target}
+
     variables:
       catalog: shopease_prod
+
     permissions:
       - group_name: data-engineering
         level: CAN_MANAGE
