@@ -27,7 +27,7 @@ def main():
     orders = spark.table("olist.bronze.orders")
     orders = enforce_not_null(orders, ["order_id", "customer_id"])
     orders = dedupe_latest(orders, ["order_id"], "_ingested_at")
-    orders = orders.withColumn("order_date", F.to_date("order_timestamp"))
+    orders = orders.withColumn("order_date", F.to_date("order_purchase_timestamp"))
 
     merge_incremental(
         spark,
