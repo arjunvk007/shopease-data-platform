@@ -21,14 +21,23 @@ from src.gold.dimensions.product_dimension import build_product_dimension
 def main():
     spark = SparkSession.builder.getOrCreate()
 
+    # Gold dimension tables are fully recomputed every run, so allow the
+    # overwrite to replace the table schema too -- see the matching comment
+    # in 06_gold_facts.py for why (DELTA_METADATA_MISMATCH otherwise).
     customer_dim = build_customer_dimension(spark)
-    customer_dim.write.format("delta").mode("overwrite").saveAsTable("olist.gold.dim_customer")
+    customer_dim.write.format("delta").mode("overwrite").option(
+        "overwriteSchema", "true"
+    ).saveAsTable("olist.gold.dim_customer")
 
     product_dim = build_product_dimension(spark)
-    product_dim.write.format("delta").mode("overwrite").saveAsTable("olist.gold.dim_product")
+    product_dim.write.format("delta").mode("overwrite").option(
+        "overwriteSchema", "true"
+    ).saveAsTable("olist.gold.dim_product")
 
     date_dim = build_date_dimension(spark, "2024-01-01", "2027-12-31")
-    date_dim.write.format("delta").mode("overwrite").saveAsTable("olist.gold.dim_date")
+    date_dim.write.format("delta").mode("overwrite").option(
+        "overwriteSchema", "true"
+    ).saveAsTable("olist.gold.dim_date")
 
     print("[gold_dimensions] published dim_customer, dim_product, dim_date")
 

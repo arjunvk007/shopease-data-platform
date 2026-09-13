@@ -20,7 +20,11 @@ def main():
         F.sum(F.col("price") + F.col("freight_value")).alias("total_revenue"),
     )
 
-    kpis.write.format("delta").mode("overwrite").saveAsTable("olist.gold.kpi_summary")
+    # Fully recomputed every run -- allow the overwrite to replace the
+    # table schema too (see the matching comment in 06_gold_facts.py).
+    kpis.write.format("delta").mode("overwrite").option(
+        "overwriteSchema", "true"
+    ).saveAsTable("olist.gold.kpi_summary")
     print("[kpi_refresh] published olist.gold.kpi_summary")
 
 if __name__ == "__main__":
