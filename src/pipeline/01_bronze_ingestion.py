@@ -1,23 +1,18 @@
-import inspect
-import os
-import sys
-
 from pyspark.sql import SparkSession
 
-# Allow imports from project root
-sys.path.append(
-        os.path.abspath(
-                    os.path.join(
-                                    os.path.dirname(inspect.currentframe().f_code.co_filename),
-                                    "..",
-                                    "..",
-                    )
-        )
+from src.bronze.bronze_ingestion_framework import (
+    ingest_source_table_streaming,
 )
-
-from src.bronze.bronze_ingestion_framework import ingest_source_table_streaming
+from src.pipeline.runtime_config import get_runtime_config
 
 spark = SparkSession.builder.getOrCreate()
+
+
+# -------------------------------------------------------------------
+# Runtime configuration
+# -------------------------------------------------------------------
+
+CATALOG, ENVIRONMENT = get_runtime_config()
 
 
 # -------------------------------------------------------------------
@@ -25,10 +20,15 @@ spark = SparkSession.builder.getOrCreate()
 # -------------------------------------------------------------------
 
 SOURCE_ROOT = "s3://shopease-olist/landing"
-CHECKPOINT_ROOT = "s3://shopease-olist/checkpoints/bronze"
-SCHEMA_ROOT = "s3://shopease-olist/checkpoints/schema"
 
-CATALOG = "olist"
+CHECKPOINT_ROOT = (
+    f"s3://shopease-olist/checkpoints/{ENVIRONMENT}/bronze"
+)
+
+SCHEMA_ROOT = (
+    f"s3://shopease-olist/checkpoints/{ENVIRONMENT}/schema"
+)
+
 BRONZE_SCHEMA = "bronze"
 
 
@@ -50,7 +50,6 @@ DATASETS = [
 # -------------------------------------------------------------------
 
 for dataset in DATASETS:
-
     source_path = f"{SOURCE_ROOT}/{dataset}"
 
     target_table = f"{CATALOG}.{BRONZE_SCHEMA}.{dataset}"
@@ -59,7 +58,9 @@ for dataset in DATASETS:
 
     schema_location = f"{SCHEMA_ROOT}/{dataset}"
 
-    print(f"Starting Bronze ingestion for: {dataset}")
+    print(f"Environment: {ENVIRONMENT}")
+    print(f"Catalog: {CATALOG}")
+    print(f"Starting Bronze ingestion: {dataset}")
     print(f"Source: {source_path}")
     print(f"Target: {target_table}")
     print(f"Checkpoint: {checkpoint_path}")
@@ -74,4 +75,4 @@ for dataset in DATASETS:
         file_format="csv",
     )
 
-    print(f"Completed Bronze ingestion for: {dataset}")
+    print(f"Completed Bronze ingestion: {dataset}")

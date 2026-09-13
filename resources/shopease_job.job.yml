@@ -3,72 +3,134 @@ resources:
     shopease_job:
       name: shopease_medallion_pipeline
 
+      max_concurrent_runs: 1
+
       schedule:
         quartz_cron_expression: "0 0 4 * * ?"
         timezone_id: America/New_York
         pause_status: PAUSED
 
-      email_notifications:
-        on_failure:
-          - your-team@example.com
-
-      environments:
-        - environment_key: default_python
-          spec:
-            environment_version: "2"
-
       tasks:
+        # ------------------------------------------------------------
+        # 1. Bronze ingestion
+        # ------------------------------------------------------------
         - task_key: bronze_ingestion
           spark_python_task:
             python_file: ../src/pipeline/01_bronze_ingestion.py
+            parameters:
+              - "--catalog"
+              - "${var.catalog}"
+              - "--environment"
+              - "${bundle.target}"
           environment_key: default_python
 
+        # ------------------------------------------------------------
+        # 2. Bronze validation
+        # ------------------------------------------------------------
         - task_key: bronze_validation
           depends_on:
             - task_key: bronze_ingestion
           spark_python_task:
             python_file: ../src/pipeline/02_bronze_validation.py
+            parameters:
+              - "--catalog"
+              - "${var.catalog}"
+              - "--environment"
+              - "${bundle.target}"
           environment_key: default_python
 
+        # ------------------------------------------------------------
+        # 3. Silver incremental processing
+        # ------------------------------------------------------------
         - task_key: silver_incremental_processing
           depends_on:
             - task_key: bronze_validation
           spark_python_task:
             python_file: ../src/pipeline/03_silver_incremental_processing.py
+            parameters:
+              - "--catalog"
+              - "${var.catalog}"
+              - "--environment"
+              - "${bundle.target}"
           environment_key: default_python
 
+        # ------------------------------------------------------------
+        # 4. Silver validation
+        # ------------------------------------------------------------
         - task_key: silver_validation
           depends_on:
             - task_key: silver_incremental_processing
           spark_python_task:
             python_file: ../src/pipeline/04_silver_validation.py
+            parameters:
+              - "--catalog"
+              - "${var.catalog}"
+              - "--environment"
+              - "${bundle.target}"
           environment_key: default_python
 
+        # ------------------------------------------------------------
+        # 5. Gold dimensions
+        # ------------------------------------------------------------
         - task_key: gold_dimensions
           depends_on:
             - task_key: silver_validation
           spark_python_task:
             python_file: ../src/pipeline/05_gold_dimensions.py
+            parameters:
+              - "--catalog"
+              - "${var.catalog}"
+              - "--environment"
+              - "${bundle.target}"
           environment_key: default_python
 
+        # ------------------------------------------------------------
+        # 6. Gold facts
+        # ------------------------------------------------------------
         - task_key: gold_facts
           depends_on:
             - task_key: silver_validation
           spark_python_task:
             python_file: ../src/pipeline/06_gold_facts.py
+            parameters:
+              - "--catalog"
+              - "${var.catalog}"
+              - "--environment"
+              - "${bundle.target}"
           environment_key: default_python
 
+        # ------------------------------------------------------------
+        # 7. Gold validation
+        # ------------------------------------------------------------
         - task_key: gold_validation
           depends_on:
             - task_key: gold_dimensions
             - task_key: gold_facts
           spark_python_task:
             python_file: ../src/pipeline/07_gold_validation.py
+            parameters:
+              - "--catalog"
+              - "${var.catalog}"
+              - "--environment"
+              - "${bundle.target}"
           environment_key: default_python
 
+        # ------------------------------------------------------------
+        # 8. KPI refresh
+        # ------------------------------------------------------------
         - task_key: kpi_refresh
           depends_on:
             - task_key: gold_validation
           spark_python_task:
             python_file: ../src/pipeline/08_kpi_refresh.py
+            parameters:
+              - "--catalog"
+              - "${var.catalog}"
+              - "--environment"
+              - "${bundle.target}"
           environment_key: default_python
+
+      environments:
+        - environment_key: default_python
+          spec:
+            client: "1"
