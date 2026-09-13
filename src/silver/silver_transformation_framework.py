@@ -55,3 +55,19 @@ def enforce_not_null(df: DataFrame, required_columns) -> DataFrame:
         clause = F.col(column).isNotNull()
         condition = clause if condition is None else condition & clause
     return df.filter(condition)
+
+
+def split_by_referential_integrity(df: DataFrame, ref_df: DataFrame, key_column: str, ref_key_column: str = None):
+    """Split df into (valid, orphaned) based on whether key_column has a match
+    in ref_df's ref_key_column (defaults to the same name as key_column).
+
+    Used to keep referential-integrity violations out of the silver layer
+    without hard-failing the whole run: callers merge the valid half into the
+    normal target table and route the orphaned half to a quarantine table
+    instead, so a handful of bad upstream rows doesn't block everything else.
+    """
+    ref_key_column = ref_key_column or key_column
+    ref_keys = ref_df.select(F.col(ref_key_column).alias(key_column)).distinct()
+    valid = df.join(ref_keys, on=key_column, how="left_semi")
+    orphaned = df.join(ref_keys, on=key_column, how="left_anti")
+    return valid, orphaned
