@@ -20,6 +20,7 @@ from src.silver.silver_transformation_framework import (
     dedupe_latest,
     enforce_not_null,
     merge_incremental,
+    remove_from_target,
     split_by_referential_integrity,
 )
 
@@ -116,6 +117,17 @@ def main():
             target_table="olist.quarantine.orders",
             merge_condition="target.order_id = source.order_id",
         )
+        # merge_incremental only upserts, so if an earlier (pre-quarantine)
+        # run already wrote these order_ids into olist.silver.orders, they'd
+        # otherwise stay there forever even though they're excluded from
+        # valid_orders below. Purge them so the silver table only ever holds
+        # orders with a real customer.
+        remove_from_target(
+            spark,
+            keys_df=orphaned_orders.select("order_id"),
+            target_table="olist.silver.orders",
+            delete_condition="target.order_id = source.order_id",
+        )
 
     merge_incremental(
         spark,
@@ -163,6 +175,19 @@ def main():
             source_df=orphaned_order_items,
             target_table="olist.quarantine.order_items",
             merge_condition=(
+                "target.order_id = source.order_id "
+                "AND target.order_item_id = source.order_item_id"
+            ),
+        )
+        # Same retroactive cleanup as orders above: purge any of these
+        # order_id/order_item_id pairs that an earlier (pre-cascading-check)
+        # run already wrote into olist.silver.order_items, since
+        # merge_incremental alone would leave them there indefinitely.
+        remove_from_target(
+            spark,
+            keys_df=orphaned_order_items.select("order_id", "order_item_id"),
+            target_table="olist.silver.order_items",
+            delete_condition=(
                 "target.order_id = source.order_id "
                 "AND target.order_item_id = source.order_item_id"
             ),
