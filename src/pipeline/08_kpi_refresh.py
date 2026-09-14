@@ -5,8 +5,22 @@ Recomputes headline business KPIs from the gold layer and publishes them as
 a small summary table for dashboards.
 """
 
+import inspect
+import os
+import sys
+
 from pyspark.sql import SparkSession
 from pyspark.sql import functions as F
+
+sys.path.append(
+    os.path.abspath(
+        os.path.join(
+            os.path.dirname(inspect.currentframe().f_code.co_filename),
+            "..",
+            "..",
+        )
+    )
+)
 
 from src.pipeline.runtime_config import get_runtime_config
 
