@@ -1,4 +1,18 @@
+import inspect
+import os
+import sys
+
 from pyspark.sql import SparkSession
+
+sys.path.append(
+    os.path.abspath(
+        os.path.join(
+            os.path.dirname(inspect.currentframe().f_code.co_filename),
+            "..",
+            "..",
+        )
+    )
+)
 
 from src.bronze.bronze_ingestion_framework import (
     ingest_source_table_streaming,
