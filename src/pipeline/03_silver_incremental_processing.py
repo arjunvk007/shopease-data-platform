@@ -80,6 +80,9 @@ def main():
     products = dedupe_latest(products, ["product_id"], "_ingested_at")
 
     translation = spark.table(f"{catalog}.bronze.category_translation")
+        translation = dedupe_latest(
+                translation, ["product_category_name"], "_ingested_at"
+        )
 
     products = products.join(
         translation,
