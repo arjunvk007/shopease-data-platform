@@ -4,7 +4,21 @@ Pipeline entry point: gold validation.
 Sanity-checks the published gold tables before the KPI refresh step runs.
 """
 
+import inspect
+import os
+import sys
+
 from pyspark.sql import SparkSession
+
+sys.path.append(
+    os.path.abspath(
+        os.path.join(
+            os.path.dirname(inspect.currentframe().f_code.co_filename),
+            "..",
+            "..",
+        )
+    )
+)
 
 from src.pipeline.runtime_config import get_runtime_config
 
